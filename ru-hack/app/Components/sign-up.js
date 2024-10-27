@@ -66,7 +66,7 @@ export default function SignUp() {
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <Card component="form" onSubmit={handleSubmit}>
-        <Typography component="h1" variant="h4" gutterBottom>
+        <Typography component="h1" variant="h4" sx={{color:'black'}} gutterBottom>
           Sign Up
         </Typography>
         <TextField
@@ -96,8 +96,8 @@ export default function SignUp() {
           required
         />
         <FormControlLabel
-          control={<Checkbox color="primary" />}
-          label="I want to receive updates via email."
+          control={<Checkbox  />}
+          label={<Typography sx={{color:'black'}}>Remember Me</Typography>}
         />
         <Button type="submit" fullWidth variant="contained">
           Sign Up
@@ -120,18 +120,12 @@ export default function SignUp() {
         <Typography sx={{ textAlign: 'center', mt: 2 }}>
           Already have an account?{' '}
           <Link href="/sign-in" passHref>
-            <MuiLink variant="body2" underline="hover">
-              Sign In
-            </MuiLink>
+        
           </Link>
         </Typography>
         <Divider sx={{ my: 2 }} />
-        <Stack direction="row" spacing={2} justifyContent="center">
-          <Button variant="outlined">Google</Button>
-          <Button variant="outlined">Facebook</Button>
-        </Stack>
+     
       </Card>
     </Box>
   );
 }
-

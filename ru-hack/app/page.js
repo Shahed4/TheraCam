@@ -1,10 +1,10 @@
-"use client";
-
+"use client"
 import { Typography, Box, AppBar, Toolbar, Container, IconButton, Button } from '@mui/material';
 import Link from 'next/link';
 import { useState } from 'react';
-import SignIn from "./Components/SignIn";
-import SignUp from "./Components/SignUp";
+import SignIn from "./Components/sign-in";
+import SignUp from "./Components/sign-up";
+
 
 export default function Home() {
   const [currentView, setCurrentView] = useState('home'); 
@@ -15,6 +15,7 @@ export default function Home() {
     } else if (currentView === 'signUp') {
       return <SignUp />;
     }
+  
 
     // Default home content
     return (
@@ -48,7 +49,7 @@ export default function Home() {
             Sign Up
           </Button>
           <Button color="inherit" onClick={() => setCurrentView('signIn')}>
-            Login
+            Sign In
           </Button>
         </Toolbar>
       </AppBar>

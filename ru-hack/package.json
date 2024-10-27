@@ -5,8 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "pose": "python3 openpose/openpose.py",
-    "both": "concurrently \"npm run dev:next\" \"python3 openpose/openpose.py\"",
+    "pose": "python openpose/openpose.py",
+    "both": "concurrently \"npm run dev:next\" \"python openpose/openpose.py\"",
     "start": "next start",
     "lint": "next lint"
   },

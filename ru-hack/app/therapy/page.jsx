@@ -1,11 +1,11 @@
 import { Container, Box } from "@mui/material";
 
 function Page() {
-    return (
-        <Container>
-            <Box>
-                <h1>Therapy</h1>
-                <img
+  return (
+    <Container>
+      <Box>
+        <h1>Therapy</h1>
+        <img
           src="http://localhost:5001/video-feed"
           alt="Video Stream"
           style={{
@@ -16,9 +16,9 @@ function Page() {
             marginRight: "auto",
           }}
         />
-            </Box>
-        </Container>
-    );
+      </Box>
+    </Container>
+  );
 }
 
 export default Page;

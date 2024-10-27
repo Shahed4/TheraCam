@@ -1,16 +1,18 @@
-export const metadata = {
-  title: 'Physical Therapy - Next.js',
-  description: 'Helping alleviate body pain with professional guidance.',
-};
+"use client";
+import Link from "next/link";
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Your App Title</title>
+        <meta name="Therapy" content="Helps revlive pain in your muscles" />
       </head>
-      <body style={{ margin: 0 }}>
-        {children}
+      <body>
+        <nav>
+          <Link href="/">Home</Link>
+        </nav>
+        <main>{children}</main>
       </body>
     </html>
   );

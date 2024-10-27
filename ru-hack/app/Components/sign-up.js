@@ -1,25 +1,35 @@
 "use client"; // Add this at the top to mark as a client component
 
-import React, { useState } from 'react';
-import { Box, Button, Checkbox, FormControlLabel, TextField, Typography, Stack, Divider, Link as MuiLink } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import React, { useState } from "react";
+import {
+  Box,
+  Button,
+  Checkbox,
+  FormControlLabel,
+  TextField,
+  Typography,
+  Stack,
+  Divider,
+  Link as MuiLink,
+} from "@mui/material";
+import { styled } from "@mui/material/styles";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebase/config";
-import Link from 'next/link'; // Import Link from next/link
+import Link from "next/link"; // Import Link from next/link
 
 // Shared Card styling
 const Card = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
   padding: theme.spacing(4),
   gap: theme.spacing(2),
-  backgroundColor: '#fff',
+  backgroundColor: "#fff",
   borderRadius: theme.shape.borderRadius,
   boxShadow: theme.shadows[5],
-  maxWidth: '400px',
-  width: '100%',
-  margin: 'auto',
+  maxWidth: "400px",
+  width: "100%",
+  margin: "auto",
 }));
 
 export default function SignUp() {
@@ -29,8 +39,8 @@ export default function SignUp() {
   const [error, setError] = useState("");
 
   const validateInputs = () => {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
 
     if (!/\S+@\S+\.\S+/.test(email)) {
       setEmailError(true);
@@ -52,8 +62,8 @@ export default function SignUp() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (validateInputs()) {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
       try {
         await createUserWithEmailAndPassword(auth, email, password);
         setIsSignedUp(true); // Update state on successful sign-up
@@ -64,9 +74,21 @@ export default function SignUp() {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
       <Card component="form" onSubmit={handleSubmit}>
-        <Typography component="h1" variant="h4" gutterBottom>
+        <Typography
+          component="h1"
+          variant="h4"
+          sx={{ color: "black" }}
+          gutterBottom
+        >
           Sign Up
         </Typography>
         <TextField
@@ -82,7 +104,7 @@ export default function SignUp() {
           label="Email"
           variant="outlined"
           error={emailError}
-          helperText={emailError ? 'Invalid email' : ''}
+          helperText={emailError ? "Invalid email" : ""}
           required
         />
         <TextField
@@ -92,19 +114,21 @@ export default function SignUp() {
           variant="outlined"
           type="password"
           error={passwordError}
-          helperText={passwordError ? 'Password must be at least 6 characters' : ''}
+          helperText={
+            passwordError ? "Password must be at least 6 characters" : ""
+          }
           required
         />
         <FormControlLabel
-          control={<Checkbox color="primary" />}
-          label="I want to receive updates via email."
+          control={<Checkbox />}
+          label={<Typography sx={{ color: "black" }}>Remember Me</Typography>}
         />
         <Button type="submit" fullWidth variant="contained">
           Sign Up
         </Button>
         {isSignedUp && (
-          <Typography sx={{ textAlign: 'center', mt: 2 }}>
-            Successfully signed up! Go to{' '}
+          <Typography sx={{ textAlign: "center", mt: 2 }}>
+            Successfully signed up! Go to{" "}
             <Link href="/therapy" passHref>
               <MuiLink variant="body2" underline="hover">
                 Therapy Session
@@ -113,25 +137,15 @@ export default function SignUp() {
           </Typography>
         )}
         {error && (
-          <Typography color="error" sx={{ textAlign: 'center', mt: 2 }}>
+          <Typography color="error" sx={{ textAlign: "center", mt: 2 }}>
             {error}
           </Typography>
         )}
-        <Typography sx={{ textAlign: 'center', mt: 2 }}>
-          Already have an account?{' '}
-          <Link href="/sign-in" passHref>
-            <MuiLink variant="body2" underline="hover">
-              Sign In
-            </MuiLink>
-          </Link>
+        <Typography sx={{ textAlign: "center", mt: 2 }}>
+          Already have an account? <Link href="/sign-in" passHref></Link>
         </Typography>
         <Divider sx={{ my: 2 }} />
-        <Stack direction="row" spacing={2} justifyContent="center">
-          <Button variant="outlined">Google</Button>
-          <Button variant="outlined">Facebook</Button>
-        </Stack>
       </Card>
     </Box>
   );
 }
-

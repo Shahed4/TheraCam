@@ -1,10 +1,11 @@
 import cv2 as cv
 import numpy as np
 from flask import Flask, Response
+import time
 
 app = Flask(__name__)
 
-# Define your body parts and pose pairs as before
+# Define body parts and pose pairs
 BODY_PARTS = {
     "Nose": 0,
     "Neck": 1,
@@ -56,8 +57,16 @@ POSE_PAIRS = [
 # Load the neural network
 net = cv.dnn.readNetFromTensorflow("graph_opt.pb")
 
+# Variables for scoring
+green_border_count = 0
+red_border_count = 0
+start_time = time.time()
+last_score_time = start_time  # Tracks time of last score update
+current_score = 0  # Initialize current score
+
 # Function to generate video frames
 def generate_frames():
+    global green_border_count, red_border_count, last_score_time, current_score
     cap = cv.VideoCapture(0)  # 0 for the default camera
 
     while True:
@@ -65,26 +74,19 @@ def generate_frames():
         if not hasFrame:
             break
 
-        # Resize frame as per your requirements
-        inWidth = 368
-        inHeight = 368
+        # Resize frame as per requirements
+        inWidth, inHeight = 368, 368
         net.setInput(
             cv.dnn.blobFromImage(
-                frame,
-                1.0,
-                (inWidth, inHeight),
-                (127.5, 127.5, 127.5),
-                swapRB=True,
-                crop=False,
+                frame, 1.0, (inWidth, inHeight), (127.5, 127.5, 127.5), swapRB=True, crop=False
             )
         )
         out = net.forward()
-        out = out[:, :22, :, :]  # Ensure correct output shape
+        out = out[:, :22, :, :]
 
-        frameWidth = frame.shape[1]
-        frameHeight = frame.shape[0]
-
+        frameWidth, frameHeight = frame.shape[1], frame.shape[0]
         points = []
+
         for i in range(len(BODY_PARTS)):
             heatMap = out[0, i, :, :]
             _, conf, _, point = cv.minMaxLoc(heatMap)
@@ -92,19 +94,10 @@ def generate_frames():
             y = (frameHeight * point[1]) / out.shape[2]
             points.append((int(x), int(y)) if conf > 0.2 else None)
 
-        # Process and draw the body parts as in your original script
-        # (Add the angle calculations and drawing code here as needed)
-
-        # Start with black border, change to red if angles are not in range
-        border_color = (0, 255, 0)  # Change as needed based on your logic
-
-        # Calculate the elbow angle
-        elbow_angle_ok = False
-        shoulder_angle_ok = False
+        # Calculate the elbow and shoulder angles
+        elbow_angle_ok = shoulder_angle_ok = False
         if (
-            points[BODY_PARTS["RShoulder"]]
-            and points[BODY_PARTS["RElbow"]]
-            and points[BODY_PARTS["RWrist"]]
+            points[BODY_PARTS["RShoulder"]] and points[BODY_PARTS["RElbow"]] and points[BODY_PARTS["RWrist"]]
         ):
             shoulder = np.array(points[BODY_PARTS["RShoulder"]])
             elbow = np.array(points[BODY_PARTS["RElbow"]])
@@ -112,31 +105,19 @@ def generate_frames():
 
             upper_arm = elbow - shoulder
             forearm = wrist - elbow
-            angle_rad = np.arctan2(forearm[1], forearm[0]) - np.arctan2(
-                upper_arm[1], upper_arm[0]
-            )
+            angle_rad = np.arctan2(forearm[1], forearm[0]) - np.arctan2(upper_arm[1], upper_arm[0])
             angle_deg = np.degrees(angle_rad)
-
-            if angle_deg < 0:
-                angle_deg += 360
-            if angle_deg > 180:
-                angle_deg = 360 - angle_deg
+            angle_deg = angle_deg + 360 if angle_deg < 0 else angle_deg
+            angle_deg = 360 - angle_deg if angle_deg > 180 else angle_deg
 
             elbow_angle_ok = 0 <= angle_deg <= 120
             cv.putText(
-                frame,
-                f"Elbow Angle: {int(angle_deg)}",
-                (points[BODY_PARTS["RElbow"]][0] + 10, points[BODY_PARTS["RElbow"]][1]),
-                cv.FONT_HERSHEY_SIMPLEX,
-                0.5,
-                (255, 255, 255),
-                2,
+                frame, f"Elbow Angle: {int(angle_deg)}", (points[BODY_PARTS["RElbow"]][0] + 10, points[BODY_PARTS["RElbow"]][1]),
+                cv.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2,
             )
 
         if (
-            points[BODY_PARTS["Neck"]]
-            and points[BODY_PARTS["RShoulder"]]
-            and points[BODY_PARTS["RElbow"]]
+            points[BODY_PARTS["Neck"]] and points[BODY_PARTS["RShoulder"]] and points[BODY_PARTS["RElbow"]]
         ):
             neck = np.array(points[BODY_PARTS["Neck"]])
             shoulder = np.array(points[BODY_PARTS["RShoulder"]])
@@ -144,50 +125,54 @@ def generate_frames():
 
             neck_to_shoulder = neck - shoulder
             shoulder_to_elbow = elbow - shoulder
-            angle_rad = np.arctan2(shoulder_to_elbow[1], shoulder_to_elbow[0]) - np.arctan2(
-                neck_to_shoulder[1], neck_to_shoulder[0]
-            )
+            angle_rad = np.arctan2(shoulder_to_elbow[1], shoulder_to_elbow[0]) - np.arctan2(neck_to_shoulder[1], neck_to_shoulder[0])
             shoulder_angle_deg = np.degrees(angle_rad)
-
-            if shoulder_angle_deg < 0:
-                shoulder_angle_deg += 360
-            if shoulder_angle_deg > 180:
-                shoulder_angle_deg = 360 - shoulder_angle_deg
+            shoulder_angle_deg = shoulder_angle_deg + 360 if shoulder_angle_deg < 0 else shoulder_angle_deg
+            shoulder_angle_deg = 360 - shoulder_angle_deg if shoulder_angle_deg > 180 else shoulder_angle_deg
 
             shoulder_angle_ok = 70 <= shoulder_angle_deg <= 120
             cv.putText(
-                frame,
-                f"Shoulder Angle: {int(shoulder_angle_deg)}",
-                (
-                    points[BODY_PARTS["RShoulder"]][0] + 10,
-                    points[BODY_PARTS["RShoulder"]][1] + 20,
-                ),
-                cv.FONT_HERSHEY_SIMPLEX,
-                0.5,
-                (255, 255, 255),
-                2,
+                frame, f"Shoulder Angle: {int(shoulder_angle_deg)}",
+                (points[BODY_PARTS["RShoulder"]][0] + 10, points[BODY_PARTS["RShoulder"]][1] + 20),
+                cv.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2,
             )
 
-        # Start with black border, change to red if angles are not in range
+        # Determine border color
         if elbow_angle_ok and shoulder_angle_ok:
             border_color = (0, 255, 0)
-        elif (
-            points[BODY_PARTS["RShoulder"]]
-            and points[BODY_PARTS["RElbow"]]
-            and points[BODY_PARTS["RWrist"]]
-        ):
-            border_color = (0, 0, 255)
+            green_border_count += 1
         else:
-            border_color = (0, 0, 0)
+            border_color = (0, 0, 255)
+            red_border_count += 1
 
         cv.rectangle(frame, (0, 0), (frameWidth - 1, frameHeight - 1), border_color, 10)
 
+        # Update score every 5 seconds
+        current_score = 0
+        current_time = time.time()
+        if current_time - last_score_time >= 5:
+            
+            current_score = current_score+ 1 if green_border_count > red_border_count else current_score
+            print(f"Score Update: {current_score} (Green borders: {green_border_count}, Red borders: {red_border_count})")
+            green_border_count = 0
+            red_border_count = 0
+            last_score_time = current_time  # Update last score time
+
+        # Display score on the top-left corner of the frame
+        cv.putText(
+            frame,
+            f"Score: {current_score}",
+            (10, 30),  # Top-left position
+            cv.FONT_HERSHEY_SIMPLEX,
+            1,
+            (0, 0, 0),  # Black color
+            2,
+        )
+
         # Draw the body parts and connections
         for pair in POSE_PAIRS:
-            partFrom = pair[0]
-            partTo = pair[1]
-            idFrom = BODY_PARTS[partFrom]
-            idTo = BODY_PARTS[partTo]
+            partFrom, partTo = pair[0], pair[1]
+            idFrom, idTo = BODY_PARTS[partFrom], BODY_PARTS[partTo]
 
             if points[idFrom] and points[idTo]:
                 cv.line(frame, points[idFrom], points[idTo], (0, 255, 0), 3)
@@ -199,16 +184,11 @@ def generate_frames():
         frame = buffer.tobytes()
 
         # Yield the frame in the format required for video streaming
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+        yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
 @app.route('/video-feed')
 def video_feed():
-    return Response(generate_frames(),
-                    mimetype='multipart/x-mixed-replace; boundary=frame')
-
-# if __name__ == '__main__':
-#     app.run(host='0.0.0.0', port=5000)  # Adjust the host and port as needed
+    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 if __name__ == "__main__":
-    app.run(port=5001)  # Change to a different port
+    app.run(port=5001)  # Adjust port as needed
